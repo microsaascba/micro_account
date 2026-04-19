@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1776638495114,
+      "tag": "0000_hard_shatterstar",
+      "breakpoints": true
+    }
+  ]
+}
