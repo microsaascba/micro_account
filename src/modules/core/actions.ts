@@ -2,9 +2,6 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getDb } from '../../lib/db';
-import { companies, users, companyUsers } from './schema';
-
 
 // 1. Acción para guardar la empresa seleccionada en la sesión
 export async function selectCompanyAction(companyId: string) {
@@ -42,33 +39,13 @@ export async function registerCompanyAction(formData: FormData) {
   const adminName = formData.get('name') as string;
   const adminEmail = formData.get('email') as string;
 
-  // A. Insertamos la Empresa en la base de datos
-  const newCompany = await db.insert(companies).values({
-    id: crypto.randomUUID(), // <-- Agregamos la generación del ID
-    businessName,
-    cuit,
-    taxCondition,
-  }).returning();
+  // Simulamos la inserción en base de datos (luego conectaremos Drizzle aquí)
+  console.log('=========================================');
+  console.log('🚀 NUEVO ALTA DE EMPRESA RECIBIDA');
+  console.log('Empresa:', businessName, '| CUIT:', cuit, '| Fiscal:', taxCondition);
+  console.log('Admin:', adminName, '| Email:', adminEmail);
+  console.log('=========================================');
 
-  const companyId = newCompany[0].id;
-
-// B. Insertamos el Usuario Administrador
-  const newUser = await db.insert(users).values({
-    id: crypto.randomUUID(),
-    name: adminName,
-    email: adminEmail,
-    passwordHash: 'contraseña_temporal_123', // <-- AGREGAMOS EL CAMPO FALTANTE
-  }).returning();
-
-  const userId = newUser[0].id;
-
-  // C. Vinculamos al Usuario con la Empresa asignándole el Rol
-  await db.insert(companyUsers).values({
-    companyId,
-    userId,
-    roleId: 'superadmin',
-  });
-
-  // Redirigimos al Lobby para ver la empresa recién creada
+  // Redirigimos al usuario al selector de empresas (Lobby)
   redirect('/select-company');
 }
