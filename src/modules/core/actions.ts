@@ -2,45 +2,69 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getDb } from '../../lib/db';
+import { companies, users, companyUsers } from './schema';
 
-// 1. Acción para guardar la empresa seleccionada en una Cookie y entrar al sistema
+// 1. Acción para guardar la empresa seleccionada en la sesión
 export async function selectCompanyAction(companyId: string) {
-  // En Next.js 15, cookies() es asíncrono, por eso usamos await
   (await cookies()).set('x-company-id', companyId, {
     path: '/',
     httpOnly: true,
     sameSite: 'lax',
   });
-  
   redirect('/dashboard');
 }
 
-// 2. Función temporal (Mock) para listar empresas. 
-// Luego la conectaremos a Drizzle y a nuestra tabla 'company_users'.
+// 2. Función REAL para listar empresas desde Cloudflare D1
 export async function getUserCompanies() {
-  return [
-    { id: 'uuid-1', businessName: 'Estudio Contable Gómez & Asoc.', cuit: '30-71234567-8', role: 'SuperAdmin' },
-    { id: 'uuid-2', businessName: 'Tech Solutions SRL', cuit: '30-87654321-0', role: 'Contador' },
-    { id: 'uuid-3', businessName: 'Ferretería Industrial Norte', cuit: '33-12345678-9', role: 'Administrativo Ventas' }
-  ];
+  const db = getDb();
+  
+  // Hacemos un SELECT a la tabla de empresas en nuestra base de datos
+  const allCompanies = await db.select().from(companies);
+
+  // Mapeamos los datos para que la interfaz los dibuje correctamente
+  return allCompanies.map(c => ({
+    id: c.id,
+    businessName: c.businessName,
+    cuit: c.cuit,
+    role: 'SuperAdmin' // Por ahora fijo, luego lo cruzaremos con los permisos reales
+  }));
 }
 
-// 3. Acción para registrar una nueva empresa y administrador
+// 3. Acción REAL para registrar una nueva empresa y administrador
 export async function registerCompanyAction(formData: FormData) {
-  // Extraemos los datos que el usuario escribió en los inputs
+  const db = getDb();
+
   const businessName = formData.get('businessName') as string;
   const cuit = formData.get('cuit') as string;
   const taxCondition = formData.get('taxCondition') as string;
   const adminName = formData.get('name') as string;
   const adminEmail = formData.get('email') as string;
 
-  // Simulamos la inserción en base de datos (luego conectaremos Drizzle aquí)
-  console.log('=========================================');
-  console.log('🚀 NUEVO ALTA DE EMPRESA RECIBIDA');
-  console.log('Empresa:', businessName, '| CUIT:', cuit, '| Fiscal:', taxCondition);
-  console.log('Admin:', adminName, '| Email:', adminEmail);
-  console.log('=========================================');
+  // A. Insertamos la Empresa en la base de datos
+  const newCompany = await db.insert(companies).values({
+    businessName,
+    cuit,
+    taxCondition,
+  }).returning();
 
-  // Redirigimos al usuario al selector de empresas (Lobby)
+  const companyId = newCompany[0].id;
+
+  // B. Insertamos el Usuario Administrador
+  const newUser = await db.insert(users).values({
+    name: adminName,
+    email: adminEmail,
+  }).returning();
+
+  const userId = newUser[0].id;
+
+  // C. Vinculamos al Usuario con la Empresa asignándole el Rol
+  await db.insert(companyUsers).values({
+    companyId,
+    userId,
+    roleId: 'superadmin',
+  });
+
+  // Redirigimos al Lobby para ver la empresa recién creada
   redirect('/select-company');
 }
