@@ -36,3 +36,29 @@ export const companyUsers = sqliteTable('company_users', {
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.companyId] }),
 }));
+
+// 5. Clientes
+export const customers = sqliteTable('customers', {
+  id: text('id').primaryKey(), // UUID
+  companyId: text('company_id').notNull().references(() => companies.id), // Aislamiento multi-tenant
+  businessName: text('business_name').notNull(), // Razón Social
+  cuit: text('cuit').notNull(), // CUIT
+  taxCondition: text('tax_condition').notNull(), // RI, Monotributo, Exento, Consumidor Final
+  email: text('email'),
+  address: text('address'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// 6. Proveedores
+export const suppliers = sqliteTable('suppliers', {
+  id: text('id').primaryKey(), // UUID
+  companyId: text('company_id').notNull().references(() => companies.id), // Aislamiento multi-tenant
+  businessName: text('business_name').notNull(), // Razón Social
+  cuit: text('cuit').notNull(), // CUIT
+  taxCondition: text('tax_condition').notNull(), // RI, Monotributo, Exento
+  email: text('email'),
+  address: text('address'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
+});

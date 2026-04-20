@@ -8,6 +8,13 @@
       "when": 1776638495114,
       "tag": "0000_hard_shatterstar",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776647549272,
+      "tag": "0001_tidy_frank_castle",
+      "breakpoints": true
     }
   ]
 }
